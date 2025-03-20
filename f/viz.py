@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
-
 
 def plot_random_data_img(data, dimension, labels, increase=0):
     plt.figure(figsize=(8+increase,8+increase))
@@ -32,3 +30,25 @@ def plot_fit_result(m:list, epochs):
 
     plt.legend()
     plt.show()
+
+
+def plot_results(data, true_labels, pred_labels, label_names):
+  fig = plt.figure(figsize=(10,8))
+  r = int(np.sqrt(len(data)))
+  c = r
+
+  for i in range(0, len(data)):
+    plt.subplot(r, c, i+1)
+    plt.imshow(data[i].squeeze(), cmap='grey')
+    t_l = label_names[true_labels[i]]
+    t_p = label_names[pred_labels[i]]
+
+    if t_l == t_p:
+      plt.title(f'True: {t_l} | Predict: {t_p}', c='g')
+
+    else:
+      plt.title(f'True: {t_l} | Predict: {t_p}', c='r')
+
+    plt.axis(False)
+  plt.tight_layout()
+  plt.show()
