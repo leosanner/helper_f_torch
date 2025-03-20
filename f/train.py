@@ -115,3 +115,20 @@ def eval_model(model: torch.nn.Module, acc_fn,
       'accuracy': acc,
   }
 
+
+def make_predictions(model: torch.nn.Module,
+                     data: list,
+                     device : torch.device = device):
+  pred_probs = []
+  model.to(device)
+  model.eval()
+
+  with torch.inference_mode():
+    for sample in data:
+      sample = torch.unsqueeze(sample, dim=0).to(device)
+      logit = model(sample)
+      prob = torch.softmax(logit.squeeze(), dim=0)
+
+      pred_probs.append(prob.cpu())
+
+  return torch.stack(pred_probs)
