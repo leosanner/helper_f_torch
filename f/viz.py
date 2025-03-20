@@ -33,6 +33,7 @@ def plot_fit_result(m:list, epochs):
 
 
 def plot_results(data, true_labels, pred_labels, label_names):
+    '''Plot image true label x pred label, if true==pred-> green title, else red'''
   fig = plt.figure(figsize=(10,8))
   r = int(np.sqrt(len(data)))
   c = r
