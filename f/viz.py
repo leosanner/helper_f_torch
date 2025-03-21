@@ -6,6 +6,7 @@ from sklearn.model_selection import confusion_matrix
 import random
 from train.py import make_predictions
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def plot_random_data_img(data, dimension, labels, increase=0):
     '''data must be a list of tuples with tensors and labels, dimension must be a int, labels must be a list of strings'''
@@ -40,60 +41,40 @@ def plot_fit_result(m:list, epochs):
     plt.show()
 
 
-def plot_results(data, true_labels, pred_labels, label_names):
-    '''Plot image true label x pred label, if true==pred-> green title, else red'''
-  fig = plt.figure(figsize=(10,8))
-  r = int(np.sqrt(len(data)))
-  c = r
+def plot_results(model:torch.nn.Module,
+                 data:list,
+                 labels: list[str],
+                 dimension: int = 3):
+  
+  tensor_list = []
+  y_true = []
+  y_pred = []
 
-  for i in range(0, len(data)):
-    plt.subplot(r, c, i+1)
-    plt.imshow(data[i].squeeze(), cmap='grey')
-    t_l = label_names[true_labels[i]]
-    t_p = label_names[pred_labels[i]]
+  random_data = random.choices(data, k=dimension**2)
+  with torch.inference_mode():
+      for X, y in random_data:
+        pred = torch.softmax(model(X.to(device).unsqueeze(dim=0)), dim=1).argmax(dim=1).item()
+        tensor_list.append(X)
+        y_true.append(y)
+        y_pred.append(pred)
+
+  fig = plt.figure(figsize=(8,8))
+
+  for idx, tensor in enumerate(tensor_list):
+    tensor = tensor.permute(1, 2, 0)
+    plt.subplot(dimension, dimension, idx+1)
+    plt.imshow(tensor.squeeze(), cmap='grey')
+    t_l = labels[y_true[idx]]
+    t_p = labels[y_pred[idx]]
 
     if t_l == t_p:
-      plt.title(f'True: {t_l} | Predict: {t_p}', c='g')
+      plt.title(f'True: {t_l} | Predict: {t_p}', c='g', pad=10)
 
     else:
-      plt.title(f'True: {t_l} | Predict: {t_p}', c='r')
+      plt.title(f'True: {t_l} | Predict: {t_p}', c='r', pad=10)
 
     plt.axis(False)
+  
+  plt.subplots_adjust(wspace=0.9, hspace=0.8)
   plt.tight_layout()
   plt.show()
-
-
-def plot_cm(y_true, y_pred, classes,
-            size=(7,7), color='Blues'):
-  
-  '''y_true, y_pred -> tensors, classes -> list of classes names'''
-
-  cm = confusion_matrix(y_true=torch.cat(y_true),
-                      y_pred=torch.cat(y_pred))
-
-  plt.figure(figsize=size, dpi=300)
-  ax = sns.heatmap(cm, xticklabels=classes, yticklabels=classes,
-              cmap=color, annot=True, fmt='d', cbar=False,)
-
-  for _, spine in ax.spines.items():
-      spine.set_visible(True)
-      spine.set_color('black')
-      spine.set_linewidth(1)
-
-  plt.title('Matriz de Confusão')
-  plt.xlabel('Valores Preditos Pelo Modelo')
-  plt.ylabel('Valores Reais')
-  plt.xticks(rotation=45)
-  plt.show()
-
-
-def plot_predictions(model, data, true_labels, pred_labels, labels, k=9):
-  test_samples = []
-  test_labels = []
-
-  for sample, label in random.sample(list(data), k=9):
-    test_samples.append(sample)
-    test_labels.append(label)
-
-  pred_labels = make_predictions(model=model, data=data).argmax(dim=1)
-  plot_results(test_samples, test_labels, pred_labels, labels)
